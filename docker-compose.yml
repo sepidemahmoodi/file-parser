@@ -44,5 +44,5 @@ services:
 networks:
   default:
     external: true
-    name: notification_default
+    name: file_parser_default
 
