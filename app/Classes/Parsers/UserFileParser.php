@@ -4,6 +4,8 @@ use App\Jobs\StoreJob;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\Storage\StoreUsersLogInDb;
 use App\Classes\Storage\StoreUsersLogInFile;
+use App\Classes\QueueHandler\PublishMessage;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class UserFileParser implements ParserInterface
 {
@@ -15,7 +17,7 @@ class UserFileParser implements ParserInterface
                 while (!feof($fileHandle)) {
                     while (($line = fgets($fileHandle)) !== false) {
                     	$data = $this->prepareData(trim($line));
-						$validator = $this->prepareValidator();
+						$validator = $this->prepareValidator($data);
 				        if ($validator->fails()){
 							StoreJob::dispatch($data, new StoreUsersLogInFile);
 				        }
@@ -41,9 +43,9 @@ class UserFileParser implements ParserInterface
         return file_exists($logFilePath);
     }
 
-    private function prepareValidator()
+    private function prepareValidator($data)
     {
-    	Validator::make($data, [
+    	return Validator::make($data, [
             'national_code' => 'required|string|unique:users_log|max:10',
             'mobile' => 'required|string|unique:users_log|max:11',
         ]);
